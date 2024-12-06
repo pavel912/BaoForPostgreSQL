@@ -11,7 +11,9 @@ from torch.utils.data import DataLoader
 import net
 from featurize import TreeFeaturizer
 
-CUDA = torch.cuda.is_available()
+USE_CUDA_TRAIN = bool(os.environ['USE_CUDA_TRAIN'])
+USE_CUDA_INF = bool(os.environ['USE_CUDA_INF'])
+# CUDA = torch.cuda.is_available()
 
 def _nn_path(base):
     return os.path.join(base, "nn_weights")
@@ -144,8 +146,10 @@ class BaoRegression:
 
         self.__net = net.BaoNet(in_channels)
         self.__in_channels = in_channels
-        if CUDA:
+        if USE_CUDA_TRAIN:
             self.__net = self.__net.cuda()
+        else:
+            self.__net = self.__net.cpu()
 
         optimizer = torch.optim.Adam(self.__net.parameters())
         loss_fn = torch.nn.MSELoss()
@@ -154,8 +158,11 @@ class BaoRegression:
         for epoch in range(100):
             loss_accum = 0
             for x, y in dataset:
-                if CUDA:
+                if USE_CUDA_TRAIN:
                     y = y.cuda()
+                else:
+                    y = y.cpu()
+
                 y_pred = self.__net(x)
                 loss = loss_fn(y_pred, y)
                 loss_accum += loss.item()
@@ -186,6 +193,12 @@ class BaoRegression:
         X = self.__tree_transform.transform(X)
         
         self.__net.eval()
+
+        if USE_CUDA_INF:
+            self.__net = self.__net.cuda()
+        else:
+            self.__net = self.__net.cpu()
+
         pred = self.__net(X).cpu().detach().numpy()
         return self.__pipeline.inverse_transform(pred)
 

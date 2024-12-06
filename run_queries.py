@@ -1,10 +1,11 @@
+import argparse
 import psycopg2
 import os
 import sys
 import random
 from time import time, sleep
 
-USE_BAO = False
+USE_BAO = bool(os.environ['USE_BAO'])
 PG_CONNECTION_STR = "dbname=imdb user=imdb host=localhost"
 
 # https://stackoverflow.com/questions/312443/

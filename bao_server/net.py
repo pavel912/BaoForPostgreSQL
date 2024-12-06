@@ -48,3 +48,7 @@ class BaoNet(nn.Module):
     def cuda(self):
         self.__cuda = True
         return super().cuda()
+
+    def cpu(self):
+        self.__cuda = False
+        return super().cpu()
