@@ -11,8 +11,8 @@ from torch.utils.data import DataLoader
 import net
 from featurize import TreeFeaturizer
 
-USE_CUDA_TRAIN = bool(os.environ['USE_CUDA_TRAIN'])
-USE_CUDA_INF = bool(os.environ['USE_CUDA_INF'])
+USE_CUDA_TRAIN = os.environ['USE_CUDA_TRAIN'] == "True"
+USE_CUDA_INF = os.environ['USE_CUDA_INF'] == "True"
 # CUDA = torch.cuda.is_available()
 
 def _nn_path(base):
