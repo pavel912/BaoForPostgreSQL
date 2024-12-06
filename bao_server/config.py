@@ -2,7 +2,7 @@ import configparser
 
 def read_config():
     config = configparser.ConfigParser()
-    config.read("bao.cfg")
+    config.read("BaoForPostgreSQL/bao_server/bao.cfg")
 
     if "bao" not in config:
         print("bao.cfg does not have a [bao] section.")
