@@ -1,0 +1,6 @@
+numpy==1.26.0
+--extra-index-url https://download.pytorch.org/whl/cu117
+torch==1.13.0+cu117
+scikit-learn
+joblib
+psycopg2
