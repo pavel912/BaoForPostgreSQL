@@ -36,8 +36,9 @@ class BaoModel:
         res = self.__current_model.predict(arms)
         idx = res.argmin()
         stop = time.time()
-        print("Selected index", idx,
-              "after", f"{round((stop - start) * 1000)}ms",
+        print("At", stop,
+              "selected index", idx,
+              "after", f"{stop - start} mis",
               "Predicted reward / PG:", res[idx][0],
               "/", res[0][0])
         return idx
