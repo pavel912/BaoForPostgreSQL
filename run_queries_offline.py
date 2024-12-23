@@ -49,6 +49,7 @@ print("Using Bao:", USE_BAO)
 
 random.seed(42)
 query_sequence = random.choices(queries, k=500)
+all_chunks = list(chunks(query_sequence, 25))
 
 if USE_BAO:
     print("Retraining")
@@ -58,20 +59,7 @@ if USE_BAO:
 
     sleep(10)
 
-    print("Executing queries without further training")
-    bao_chunks = list(chunks(query_sequence, 25))
-
-    for c_idx, chunk in enumerate(bao_chunks):
-        for q_idx, (fp, q) in enumerate(chunk):
-            q_time = run_query(q, bao_select=USE_BAO)
-            print(c_idx, q_idx, time(), fp, q_time, flush=True)
-else:
-
-    pg_chunks = list(chunks(query_sequence, 25))
-
-    print("Executing queries using PG optimizer for initial training")
-
-    for c_idx, chunk in enumerate(pg_chunks):
-        for q_idx, (fp, q) in enumerate(chunk):
-            q_time = run_query(q, bao_reward=USE_BAO)
-            print(c_idx, q_idx, time(), fp, q_time, flush=True)
+for c_idx, chunk in enumerate(all_chunks):
+    for q_idx, (fp, q) in enumerate(chunk):
+        q_time = run_query(q, bao_reward=not USE_BAO, bao_select=USE_BAO)
+        print(c_idx, q_idx, time(), fp, q_time, flush=True)
