@@ -49,18 +49,11 @@ print("Using Bao:", USE_BAO)
 
 random.seed(42)
 query_sequence = random.choices(queries, k=500)
-pg_chunks, *bao_chunks = list(chunks(query_sequence, 25))
+all_chunks = list(chunks(query_sequence, 25))
 
-print("Executing queries using PG optimizer for initial training")
+print("Executing test workload")
 
-for fp, q in pg_chunks:
-    pg_time = run_query(q, bao_reward=True)
-    print("x", "x", time(), fp, pg_time, "PG", flush=True)
-
-for c_idx, chunk in enumerate(bao_chunks):
-    if USE_BAO:
-        os.system("python3 BaoForPostgreSQL/bao_server/baoctl.py --retrain")
-        os.system("sync")
+for c_idx, chunk in enumerate(all_chunks):
     for q_idx, (fp, q) in enumerate(chunk):
-        q_time = run_query(q, bao_reward=USE_BAO, bao_select=USE_BAO)
+        q_time = run_query(q, bao_select=USE_BAO)
         print(c_idx, q_idx, time(), fp, q_time, flush=True)
