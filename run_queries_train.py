@@ -47,7 +47,7 @@ print("Read", len(queries), "queries.")
 print("Using Bao:", True)
 
 random.seed(42)
-query_sequence = random.choices(queries, k=500)
+query_sequence = random.choices(queries, k=50)
 pg_chunks, *bao_chunks = list(chunks(query_sequence, 25))
 
 print("Executing training workload")
