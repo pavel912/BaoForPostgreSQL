@@ -91,7 +91,7 @@ class BaoRegression:
             
         self.__net = net.BaoNet(self.__in_channels)
         if USE_CPU:
-            self.__net.load_state_dict(torch.load(_nn_path(path)), map_location=torch.device('cpu'))
+            self.__net.load_state_dict(torch.load(_nn_path(path), map_location=torch.device('cpu')))
         else:
             self.__net.load_state_dict(torch.load(_nn_path(path)))
         self.__net.eval()
