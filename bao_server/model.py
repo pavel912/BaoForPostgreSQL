@@ -13,6 +13,7 @@ from featurize import TreeFeaturizer
 
 USE_CUDA_TRAIN = os.environ['USE_CUDA_TRAIN'] == "True"
 USE_CUDA_INF = os.environ['USE_CUDA_INF'] == "True"
+USE_CPU = os.environ['USE_CPU'] == "True"
 # CUDA = torch.cuda.is_available()
 
 def _nn_path(base):
@@ -89,7 +90,10 @@ class BaoRegression:
             self.__in_channels = joblib.load(f)
             
         self.__net = net.BaoNet(self.__in_channels)
-        self.__net.load_state_dict(torch.load(_nn_path(path))) # map_location=torch.device('cpu')
+        if USE_CPU:
+            self.__net.load_state_dict(torch.load(_nn_path(path)), map_location=torch.device('cpu'))
+        else:
+            self.__net.load_state_dict(torch.load(_nn_path(path)))
         self.__net.eval()
         
         with open(_y_transform_path(path), "rb") as f:

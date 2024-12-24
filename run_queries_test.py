@@ -48,7 +48,7 @@ print("Read", len(queries), "queries.")
 print("Using Bao:", USE_BAO)
 
 random.seed(42)
-query_sequence = random.choices(queries, k=500)
+query_sequence = random.choices(queries, k=25)
 all_chunks = list(chunks(query_sequence, 25))
 
 print("Executing test workload")
