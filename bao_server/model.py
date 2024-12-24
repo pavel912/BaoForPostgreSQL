@@ -159,10 +159,8 @@ class BaoRegression:
             loss_accum = 0
             for x, y in dataset:
                 if USE_CUDA_TRAIN:
-                    x = x.cuda()
                     y = y.cuda()
                 else:
-                    x = x.cpu()
                     y = y.cpu()
 
                 y_pred = self.__net(x)
