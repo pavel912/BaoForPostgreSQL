@@ -5,6 +5,7 @@ import sys
 import random
 from time import time, sleep
 
+WORKLOAD_SIZE = int(os.environ['WORKLOAD_SIZE'])
 PG_CONNECTION_STR = "dbname=imdb user=imdb host=localhost"
 
 # https://stackoverflow.com/questions/312443/
@@ -47,7 +48,7 @@ print("Read", len(queries), "queries.")
 print("Using Bao:", True)
 
 random.seed(42)
-query_sequence = random.choices(queries, k=500)
+query_sequence = random.choices(queries, k=WORKLOAD_SIZE)
 pg_chunks, *bao_chunks = list(chunks(query_sequence, 25))
 
 print("Executing training workload")
