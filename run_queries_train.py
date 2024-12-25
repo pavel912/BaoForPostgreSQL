@@ -5,6 +5,7 @@ import sys
 import random
 from time import time, sleep
 
+USE_BAO = os.environ['USE_BAO'] == "True"
 WORKLOAD_SIZE = int(os.environ['WORKLOAD_SIZE'])
 PG_CONNECTION_STR = "dbname=imdb user=imdb host=localhost"
 
@@ -45,7 +46,7 @@ for fp in query_paths:
         query = f.read()
     queries.append((fp, query))
 print("Read", len(queries), "queries.")
-print("Using Bao:", True)
+print("Using Bao:", USE_BAO)
 
 random.seed(42)
 query_sequence = random.choices(queries, k=WORKLOAD_SIZE)
@@ -54,13 +55,14 @@ pg_chunks, *bao_chunks = list(chunks(query_sequence, 25))
 print("Executing training workload")
 
 for fp, q in pg_chunks:
-    pg_time = run_query(q, bao_reward=True)
+    pg_time = run_query(q, bao_reward=USE_BAO)
     print("x", "x", time(), fp, pg_time, "PG", flush=True)
 
 for c_idx, chunk in enumerate(bao_chunks):
-    os.system("python3 BaoForPostgreSQL/bao_server/baoctl.py --retrain")
-    os.system("sync")
+    if USE_BAO:
+        os.system("python3 BaoForPostgreSQL/bao_server/baoctl.py --retrain")
+        os.system("sync")
 
     for q_idx, (fp, q) in enumerate(chunk):
-        q_time = run_query(q, bao_reward=True, bao_select=True)
+        q_time = run_query(q, bao_reward=USE_BAO, bao_select=USE_BAO)
         print(c_idx, q_idx, time(), fp, q_time, flush=True)
