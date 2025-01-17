@@ -37,7 +37,8 @@ for query in queries:
     data.append([query[0], query[1], explain_query(query[1])])
 
 with open("query_plans", "x") as f:
-    for d in data:
+    for d in data[0:]:
+        print(d)
         f.write("Query path: " + d[0] + "\n")
         f.write(d[1] + "\n")
         f.write(d[2][0][0] + "\n")
