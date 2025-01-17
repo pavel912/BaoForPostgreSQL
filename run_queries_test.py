@@ -28,7 +28,7 @@ def run_query(sql, bao_select=False, bao_reward=False):
             cur.execute(f"SET pg_bao.enable_bao_rewards TO {bao_reward}")
             cur.execute("SET pg_bao.bao_num_arms TO 5")
             cur.execute("SET statement_timeout TO 300000")
-            cur.execute(q)
+            cur.execute(sql)
             cur.fetchall()
             conn.close()
             break
