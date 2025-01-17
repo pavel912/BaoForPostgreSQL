@@ -30,4 +30,4 @@ with open(query_path) as f:
 print("Explaining query", query)
 
 for line in exaplain_query(query):
-    print(line)
+    print(line[0])
