@@ -17,7 +17,7 @@ def exaplain_query(sql):
     cur.execute(f"SET pg_bao.enable_bao_rewards TO {False}")
     cur.execute("SET pg_bao.bao_num_arms TO 5")
     cur.execute("SET statement_timeout TO 300000")
-    cur.execute("EXAPLIN " + sql)
+    cur.execute("EXPLAIN " + sql)
     query_plan = cur.fetchall()
     conn.close()
     return query_plan
