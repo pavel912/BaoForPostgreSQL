@@ -1,9 +1,6 @@
-import argparse
 import psycopg2
-import os
 import sys
-import random
-from time import time, sleep
+import json
 
 PG_CONNECTION_STR = "dbname=imdb user=imdb host=localhost"
 
@@ -40,5 +37,5 @@ with open("query_plans", "w") as f:
     for d in data:
         f.write("Query path: " + d[0] + "\n")
         f.write(d[1] + "\n")
-        f.write(str(d[2][0][0]))
+        json.dump(d[2][0][0], f)
         f.write("\n\n")
