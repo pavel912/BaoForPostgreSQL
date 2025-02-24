@@ -11,12 +11,55 @@ import baoctl
 import math
 import reg_blocker
 from constants import (PG_OPTIMIZER_INDEX, DEFAULT_MODEL_PATH,
-                       OLD_MODEL_PATH, TMP_MODEL_PATH)
+                       OLD_MODEL_PATH, TMP_MODEL_PATH, POWER_LOGS_PATH, MAX_POWER)
 
 def add_buffer_info_to_plans(buffer_info, plans):
     for p in plans:
         p["Buffers"] = buffer_info
     return plans
+
+def read_power_logs(start_time, end_time):
+    data = []
+    prev = None
+
+    with open(POWER_LOGS_PATH) as f:
+        while True:
+            try:
+                pct = f.readline()
+                f.readline()
+                f.readline()
+                f.readline()
+                time_reading = f.readline()
+                pw = MAX_POWER * float(pct.split(" ")[3]) / 100
+                f.readline()
+                
+                datetime = int(time_reading)
+                if prev:
+                    if datetime >= start_time and prev < end_time:
+                        data.append((datetime, prev, pw))
+                
+                prev = datetime
+
+            except ValueError:
+                continue
+            except IndexError:
+                break
+    
+    return data
+
+def get_power_reward(query_time_ms):
+    query_finish_time = int(time.time() * 1000)
+    query_start_time = query_finish_time - int(query_time_ms)
+
+    data = read_power_logs(query_start_time, query_finish_time)
+    
+    reward = 0
+    for rec in data:
+        query_period_time = min(query_finish_time, rec[0]) - max(query_start_time, rec[1])
+        query_period_energy = rec[2] * query_period_time
+        reward += query_period_energy
+    
+    return reward
 
 class BaoModel:
     def __init__(self):
@@ -115,8 +158,10 @@ class BaoJSONHandler(JSONTCPHandler):
                 self.request.close()
             elif message_type == "reward":
                 plan, buffers, obs_reward = self.__messages
+                power_reward = get_power_reward(int(float(obs_reward["reward"])))
+                pid = obs_reward["pid"]
                 plan = add_buffer_info_to_plans(buffers, [plan])[0]
-                storage.record_reward(plan, obs_reward["reward"], obs_reward["pid"])
+                storage.record_reward(plan, power_reward, pid)
             elif message_type == "load model":
                 path = self.__messages[0]["path"]
                 self.server.bao_model.load_model(path)

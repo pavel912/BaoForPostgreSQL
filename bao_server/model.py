@@ -11,8 +11,8 @@ from torch.utils.data import DataLoader
 import net
 from featurize import TreeFeaturizer
 
-USE_CUDA_TRAIN = os.environ['USE_CUDA_TRAIN'] == "True"
-USE_CUDA_INF = os.environ['USE_CUDA_INF'] == "True"
+USE_CUDA_TRAIN = True
+USE_CUDA_INF = False
 USE_CPU = os.environ['USE_CPU'] == "True"
 # CUDA = torch.cuda.is_available()
 
