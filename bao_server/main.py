@@ -161,16 +161,18 @@ class BaoJSONHandler(JSONTCPHandler):
             elif message_type == "reward":
                 plan, buffers, obs_reward = self.__messages
                 pid = obs_reward["pid"]
+                qtime = obs_reward["reward"]
+                qtime_int = int(float(qtime))
                 plan = add_buffer_info_to_plans(buffers, [plan])[0]
                 if REWARD_MODE == "TIME":
-                    storage.record_reward(plan, obs_reward, pid)
+                    storage.record_reward(plan, qtime, pid)
                 elif REWARD_MODE == "ENERGY":
-                    power_reward = get_power_reward(int(float(obs_reward["reward"])))
+                    power_reward = get_power_reward(qtime_int)
                     storage.record_reward(plan, power_reward, pid)
                 elif REWARD_MODE == "POWER":
-                    power_reward = get_power_reward(int(float(obs_reward["reward"])))
-                    mean_power_reward = power_reward / int(obs_reward)
-                    storage.record_reward(plan,  mean_power_reward, pid)
+                    power_reward = get_power_reward(qtime_int)
+                    mean_power_reward = power_reward / qtime_int
+                    storage.record_reward(plan, mean_power_reward, pid)
                 else:
                     raise RuntimeError("Unknown reward mode")
             elif message_type == "load model":
