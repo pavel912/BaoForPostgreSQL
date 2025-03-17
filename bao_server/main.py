@@ -13,6 +13,8 @@ import reg_blocker
 from constants import (PG_OPTIMIZER_INDEX, DEFAULT_MODEL_PATH,
                        OLD_MODEL_PATH, TMP_MODEL_PATH, POWER_LOGS_PATH, MAX_POWER)
 
+REWARD_MODE = os.environ['USE_BAO']
+
 def add_buffer_info_to_plans(buffer_info, plans):
     for p in plans:
         p["Buffers"] = buffer_info
@@ -158,10 +160,19 @@ class BaoJSONHandler(JSONTCPHandler):
                 self.request.close()
             elif message_type == "reward":
                 plan, buffers, obs_reward = self.__messages
-                power_reward = get_power_reward(int(float(obs_reward["reward"])))
                 pid = obs_reward["pid"]
                 plan = add_buffer_info_to_plans(buffers, [plan])[0]
-                storage.record_reward(plan, power_reward, pid)
+                if REWARD_MODE == "TIME":
+                    storage.record_reward(plan, obs_reward, pid)
+                elif REWARD_MODE == "ENERGY":
+                    power_reward = get_power_reward(int(float(obs_reward["reward"])))
+                    storage.record_reward(plan, power_reward, pid)
+                elif REWARD_MODE == "POWER":
+                    power_reward = get_power_reward(int(float(obs_reward["reward"])))
+                    mean_power_reward = power_reward / int(obs_reward)
+                    storage.record_reward(plan,  mean_power_reward, pid)
+                else:
+                    raise RuntimeError("Unknown reward mode")
             elif message_type == "load model":
                 path = self.__messages[0]["path"]
                 self.server.bao_model.load_model(path)
