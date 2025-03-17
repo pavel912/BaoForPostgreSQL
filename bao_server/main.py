@@ -11,9 +11,10 @@ import baoctl
 import math
 import reg_blocker
 from constants import (PG_OPTIMIZER_INDEX, DEFAULT_MODEL_PATH,
-                       OLD_MODEL_PATH, TMP_MODEL_PATH, POWER_LOGS_PATH, MAX_POWER)
+                       OLD_MODEL_PATH, TMP_MODEL_PATH, MAX_POWER)
 
 REWARD_MODE = os.environ['REWARD_MODE']
+POWER_LOGS_PATH = f"results/power_bao_{REWARD_MODE.lower()}.txt"
 
 def add_buffer_info_to_plans(buffer_info, plans):
     for p in plans:
