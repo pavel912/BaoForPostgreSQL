@@ -13,8 +13,17 @@ import reg_blocker
 from constants import (PG_OPTIMIZER_INDEX, DEFAULT_MODEL_PATH,
                        OLD_MODEL_PATH, TMP_MODEL_PATH, MAX_POWER)
 
-REWARD_MODE = os.environ['REWARD_MODE']
-POWER_LOGS_PATH = f"results/power_bao_{REWARD_MODE.lower()}.txt"
+WEIGHT = float(os.environ['WEIGHT'])
+POWER_LOGS_PATH = f"results/power_bao_{WEIGHT}.txt"
+
+def calculate_reward(power, time, weight):
+    if weight < 0 or weight > 2:
+        raise RuntimeError("Incorrect weight parameter. Must be between 0 and 2")
+
+    if weight == 0:
+        return time
+    else:
+        return (power ^ weight) * (time ^ (1 / weight))
 
 def add_buffer_info_to_plans(buffer_info, plans):
     for p in plans:
@@ -165,17 +174,10 @@ class BaoJSONHandler(JSONTCPHandler):
                 qtime = obs_reward["reward"]
                 qtime_int = int(float(qtime))
                 plan = add_buffer_info_to_plans(buffers, [plan])[0]
-                if REWARD_MODE == "TIME":
-                    storage.record_reward(plan, qtime, pid)
-                elif REWARD_MODE == "ENERGY":
-                    power_reward = get_power_reward(qtime_int)
-                    storage.record_reward(plan, power_reward, pid)
-                elif REWARD_MODE == "POWER":
-                    power_reward = get_power_reward(qtime_int)
-                    mean_power_reward = power_reward / qtime_int
-                    storage.record_reward(plan, mean_power_reward, pid)
-                else:
-                    raise RuntimeError("Unknown reward mode")
+                energy_reward = get_power_reward(qtime_int)
+                power = energy_reward / qtime_int
+                reward = calculate_reward(power, qtime_int, WEIGHT)
+                storage.record_reward(plan, reward, pid)
             elif message_type == "load model":
                 path = self.__messages[0]["path"]
                 self.server.bao_model.load_model(path)
