@@ -23,7 +23,7 @@ def calculate_reward(power, time, weight):
     if weight == 0:
         return time
     else:
-        return (power ^ weight) * (time ^ (1 / weight))
+        return (power ** weight) * (time ** (1 / weight))
 
 def add_buffer_info_to_plans(buffer_info, plans):
     for p in plans:
