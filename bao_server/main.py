@@ -15,13 +15,16 @@ from constants import (PG_OPTIMIZER_INDEX, DEFAULT_MODEL_PATH,
 
 WEIGHT = float(os.environ['WEIGHT'])
 POWER_LOGS_PATH = f"results/power_bao_{WEIGHT}.txt"
+IDLE_POWER = 25
 
 def calculate_reward(power, time, weight):
-    if weight < 0 or weight > 2:
-        raise RuntimeError("Incorrect weight parameter. Must be between 0 and 2")
+    if weight < 0 or weight > 10:
+        raise RuntimeError("Incorrect weight parameter. Must be between 0 and 10")
 
     if weight == 0:
         return time
+    elif weight == 10:
+        return power
     else:
         return (power ** weight) * (time ** (1 / weight))
 
@@ -175,7 +178,7 @@ class BaoJSONHandler(JSONTCPHandler):
                 qtime_int = int(float(qtime))
                 plan = add_buffer_info_to_plans(buffers, [plan])[0]
                 energy_reward = get_power_reward(qtime_int)
-                power = energy_reward / qtime_int
+                power = (energy_reward / qtime_int) - IDLE_POWER
                 reward = calculate_reward(power, qtime_int, WEIGHT)
                 storage.record_reward(plan, reward, pid)
             elif message_type == "load model":
