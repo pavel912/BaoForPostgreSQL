@@ -181,6 +181,7 @@ class BaoJSONHandler(JSONTCPHandler):
                 power = (energy_reward / qtime_int) - IDLE_POWER
                 qtime_s = qtime_int / 1000
                 reward = calculate_reward(power, qtime_s, WEIGHT)
+                print(power, qtime_s, reward)
                 storage.record_reward(plan, reward, pid)
             elif message_type == "load model":
                 path = self.__messages[0]["path"]
