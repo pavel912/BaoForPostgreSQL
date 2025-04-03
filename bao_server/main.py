@@ -15,7 +15,7 @@ from constants import (PG_OPTIMIZER_INDEX, DEFAULT_MODEL_PATH,
 
 WEIGHT = float(os.environ['WEIGHT'])
 POWER_LOGS_PATH = f"results/power_bao_{WEIGHT}.txt"
-IDLE_POWER = 25
+IDLE_POWER = 20
 
 def calculate_reward(power, time, weight):
     if weight < 0 or weight > 10:
@@ -178,7 +178,7 @@ class BaoJSONHandler(JSONTCPHandler):
                 qtime_int = int(float(qtime))
                 plan = add_buffer_info_to_plans(buffers, [plan])[0]
                 energy_reward = get_power_reward(qtime_int)
-                power = (energy_reward / qtime_int) - IDLE_POWER
+                power = max((energy_reward / qtime_int) - IDLE_POWER, 0)
                 qtime_s = qtime_int / 1000
                 reward = calculate_reward(power, qtime_s, WEIGHT)
                 print(power, qtime_s, reward)
