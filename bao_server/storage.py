@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS experience (
     id INTEGER PRIMARY KEY,
     pg_pid INTEGER,
     plan TEXT, 
-    reward REAL
+    reward double precision
 )""")
     c.execute("""
 CREATE TABLE IF NOT EXISTS experimental_query (
