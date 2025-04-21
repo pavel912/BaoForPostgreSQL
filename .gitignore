@@ -6,3 +6,5 @@
 .clangd
 .ipynb*
 .idea
+power_data_logger
+power_data_processor

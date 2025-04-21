@@ -10,12 +10,24 @@ import train
 import baoctl
 import math
 import reg_blocker
-from constants import (PG_OPTIMIZER_INDEX, DEFAULT_MODEL_PATH,
-                       OLD_MODEL_PATH, TMP_MODEL_PATH, MAX_POWER)
+from constants import (PG_OPTIMIZER_INDEX, DEFAULT_MODEL_PATH)
 
 WEIGHT = float(os.environ['WEIGHT'])
 POWER_LOGS_PATH = f"results/power_bao_{WEIGHT}.txt"
-IDLE_POWER = 20
+MIN_POWER = int(os.environ['MIN_POWER'])
+MAX_POWER = int(os.environ['MAX_POWER'])
+MIN_TIME = int(os.environ['MIN_TIME'])
+MAX_TIME = int(os.environ['MAX_TIME'])
+NOMINAL_POWER = 865
+
+def norm_power(value):
+    return min_max_scale(value, MIN_POWER, MAX_POWER)
+
+def norm_time(value):
+    return min_max_scale(value, MIN_TIME, MAX_TIME)
+
+def min_max_scale(value, min, max):
+    return (value - min) / (max - min)
 
 def calculate_reward(power, time, weight):
     if weight < 0 or weight > 10:
@@ -41,30 +53,21 @@ def read_power_logs(start_time, end_time):
         while True:
             try:
                 pct = f.readline()
-                f.readline()
-                f.readline()
-                f.readline()
-                time_reading = f.readline()
-                pw = MAX_POWER * float(pct.split(" ")[3]) / 100
-                f.readline()
-                
-                datetime = int(time_reading)
+                time_reading = int(f.readline())
                 if prev:
-                    if datetime >= start_time and prev < end_time:
-                        data.append((datetime, prev, pw))
+                    if time_reading >= start_time and prev < end_time:
+                        pw = NOMINAL_POWER * float(pct) / 100
+                        data.append((time_reading, prev, pw))
                 
-                prev = datetime
+                prev = time_reading
 
-            except ValueError:
-                continue
             except IndexError:
                 break
     
     return data
 
-def get_power_reward(query_time_ms):
-    query_finish_time = int(time.time() * 1000)
-    query_start_time = query_finish_time - int(query_time_ms)
+def get_energy_reward(query_finish_time, query_time_ms):
+    query_start_time = query_finish_time - query_time_ms
 
     data = read_power_logs(query_start_time, query_finish_time)
     
@@ -173,15 +176,16 @@ class BaoJSONHandler(JSONTCPHandler):
                 self.request.close()
             elif message_type == "reward":
                 plan, buffers, obs_reward = self.__messages
+                message_time = time.time_ns() // 1_000_000
                 pid = obs_reward["pid"]
                 qtime = obs_reward["reward"]
-                qtime_int = int(float(qtime))
+                qtime = int(float(qtime))
+                time.sleep(0.6)
+                energy_reward = get_energy_reward(message_time, qtime)
+                power_norm = norm_power(energy_reward / qtime)
+                qtime_norm = norm_time(qtime)
+                reward = calculate_reward(power_norm, qtime_norm, WEIGHT)
                 plan = add_buffer_info_to_plans(buffers, [plan])[0]
-                energy_reward = get_power_reward(qtime_int)
-                power = max((energy_reward / qtime_int) - IDLE_POWER, 0)
-                qtime_s = qtime_int / 1000
-                reward = calculate_reward(power, qtime_s, WEIGHT)
-                print(power, qtime_s, reward)
                 storage.record_reward(plan, reward, pid)
             elif message_type == "load model":
                 path = self.__messages[0]["path"]
