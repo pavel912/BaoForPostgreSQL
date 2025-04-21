@@ -61,7 +61,7 @@ def read_power_logs(start_time, end_time):
                 
                 prev = time_reading
 
-            except IndexError:
+            except ValueError:
                 break
     
     return data
