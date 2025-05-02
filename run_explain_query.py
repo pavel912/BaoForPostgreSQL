@@ -9,9 +9,9 @@ def explain_query(sql):
     conn = psycopg2.connect(PG_CONNECTION_STR)
     cur = conn.cursor()
     cur.execute("SET pg_bao.bao_host TO localhost")
-    cur.execute(f"SET pg_bao.enable_bao TO {False}")
-    cur.execute(f"SET pg_bao.enable_bao_selection TO {False}")
-    cur.execute(f"SET pg_bao.enable_bao_rewards TO {False}")
+    cur.execute(f"SET pg_bao.enable_bao TO {True}")
+    cur.execute(f"SET pg_bao.enable_bao_selection TO {True}")
+    cur.execute(f"SET pg_bao.enable_bao_rewards TO {True}")
     cur.execute("SET pg_bao.bao_num_arms TO 5")
     cur.execute("SET statement_timeout TO 300000")
     cur.execute("EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON) " + sql)
@@ -31,11 +31,12 @@ print("Explaining queries")
 data = []
 
 for query in queries:
-    data.append([query[0], query[1], explain_query(query[1])])
+    explain_query(query[1])
+    #data.append([query[0], query[1], explain_query(query[1])])
 
-with open("query_plans", "w") as f:
-    for d in data:
-        f.write("Query path: " + d[0] + "\n")
-        f.write(d[1] + "\n")
-        json.dump(d[2][0][0], f)
-        f.write("\n\n")
+#with open("query_plans", "w") as f:
+#    for d in data:
+#        f.write("Query path: " + d[0] + "\n")
+#        f.write(d[1] + "\n")
+#        json.dump(d[2][0][0], f)
+#        f.write("\n\n")
