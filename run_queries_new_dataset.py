@@ -15,6 +15,20 @@ def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
+def explain_query(sql):
+    conn = psycopg2.connect(PG_CONNECTION_STR)
+    cur = conn.cursor()
+    cur.execute("SET pg_bao.bao_host TO localhost")
+    cur.execute(f"SET pg_bao.enable_bao TO {True}")
+    cur.execute(f"SET pg_bao.enable_bao_selection TO {True}")
+    cur.execute(f"SET pg_bao.enable_bao_rewards TO {True}")
+    cur.execute("SET pg_bao.bao_num_arms TO 5")
+    cur.execute("SET statement_timeout TO 300000")
+    cur.execute("EXPLAIN " + sql)
+    query_info = cur.fetchall()
+    conn.close()
+    return query_info
+
 
 def run_query(sql, bao_select=False, bao_reward=False):
     start = time()
@@ -63,5 +77,7 @@ for c_idx, chunk in enumerate(bao_chunks):
         os.system("sync")
 
     for q_idx, (fp, q) in enumerate(chunk):
+        q_info = explain_query(q)
         q_time = run_query(q, bao_reward=USE_BAO, bao_select=USE_BAO)
         print(c_idx, q_idx, time(), fp, q_time, flush=True)
+        print(q_info)

@@ -10,11 +10,11 @@ def explain_query(sql):
     cur = conn.cursor()
     cur.execute("SET pg_bao.bao_host TO localhost")
     cur.execute(f"SET pg_bao.enable_bao TO {True}")
-    cur.execute(f"SET pg_bao.enable_bao_selection TO {True}")
-    cur.execute(f"SET pg_bao.enable_bao_rewards TO {True}")
+    cur.execute(f"SET pg_bao.enable_bao_selection TO {False}")
+    cur.execute(f"SET pg_bao.enable_bao_rewards TO {False}")
     cur.execute("SET pg_bao.bao_num_arms TO 5")
     cur.execute("SET statement_timeout TO 300000")
-    cur.execute("EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON) " + sql)
+    cur.execute("EXPLAIN " + sql)
     query_plan = cur.fetchall()
     conn.close()
     return query_plan
@@ -31,7 +31,7 @@ print("Explaining queries")
 data = []
 
 for query in queries:
-    explain_query(query[1])
+    print(explain_query(query[1]))
     #data.append([query[0], query[1], explain_query(query[1])])
 
 #with open("query_plans", "w") as f:
