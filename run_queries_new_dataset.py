@@ -15,7 +15,7 @@ def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-def explain_query(sql):
+def explain_query_bao(sql):
     conn = psycopg2.connect(PG_CONNECTION_STR)
     cur = conn.cursor()
     cur.execute("SET pg_bao.bao_host TO localhost")
@@ -77,7 +77,12 @@ for c_idx, chunk in enumerate(bao_chunks):
         os.system("sync")
 
     for q_idx, (fp, q) in enumerate(chunk):
-        q_info = explain_query(q)
+        if USE_BAO:
+            q_info = explain_query_bao(q)
         q_time = run_query(q, bao_reward=USE_BAO, bao_select=USE_BAO)
         print(c_idx, q_idx, time(), fp, q_time, flush=True)
-        print(q_info)
+        if USE_BAO:
+            if len(q_info) > 1:
+                print(q_info[1])
+            else:
+                print("Unable to extract hints")
