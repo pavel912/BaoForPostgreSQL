@@ -197,7 +197,6 @@ class BaoJSONHandler(JSONTCPHandler):
             return True
 
         self.__messages.append(data)
-        print(data)
         return False
                 
 
