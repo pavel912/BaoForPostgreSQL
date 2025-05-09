@@ -18,6 +18,7 @@ MIN_POWER = int(os.environ['MIN_POWER'])
 MAX_POWER = int(os.environ['MAX_POWER'])
 MIN_TIME = int(os.environ['MIN_TIME'])
 MAX_TIME = int(os.environ['MAX_TIME'])
+WAITING_PERIOD = 0.1
 NOMINAL_POWER = 865
 
 def norm_power(value):
@@ -45,39 +46,81 @@ def add_buffer_info_to_plans(buffer_info, plans):
         p["Buffers"] = buffer_info
     return plans
 
-def read_power_logs(start_time, end_time):
+def read_power_logs_rapl(start_time, end_time):
     data = []
     prev = None
 
     with open(POWER_LOGS_PATH) as f:
-        while True:
-            try:
-                pct = f.readline()
-                time_reading = int(f.readline())
-                if prev:
-                    if time_reading >= start_time and prev < end_time:
-                        pw = NOMINAL_POWER * float(pct) / 100
-                        data.append((time_reading, prev, pw))
-                
-                prev = time_reading
+        prev_time = None
+        prev_eng = None
+        data = []
 
-            except ValueError:
-                break
+        for line in f:
+            try:
+                time_reading, val = line.split(",")
+                time_reading = int(time_reading)
+                val = int(val) / 10 ** 6
+
+                if prev_time:
+                    if time_reading >= start_time and prev < end_time:
+                        data.append((time_reading, prev, val - prev_eng))
+                    
+                prev_time = time_reading
+                prev_eng = val
+            except ValueError as e:
+                print(e)
     
     return data
 
-def get_energy_reward(query_finish_time, query_time_ms):
+def read_power_logs_psu(start_time, end_time):
+    data = []
+    prev = None
+
+    with open(POWER_LOGS_PATH) as f:
+        prev = None
+        data = []
+
+        for line in f:
+            try:
+                time_reading, val = line.split(",")
+                time_reading = int(time_reading)
+                val = NOMINAL_POWER * float(val) / 100
+
+                if prev:
+                    if time_reading >= start_time and prev < end_time:
+                        data.append((time_reading, prev, val))
+                    
+                prev = time_reading
+            except ValueError as e:
+                print(e)
+    
+    return data
+
+def get_energy_reward(query_finish_time, query_time_ms, mode="rapl"):
     query_start_time = query_finish_time - query_time_ms
 
-    data = read_power_logs(query_start_time, query_finish_time)
+    if mode == "rapl":
+        data = read_power_logs_rapl(query_start_time, query_finish_time)
+        
+        reward = 0
+        for rec in data:
+            period_time = rec[0] - rec[1]
+            query_period_time = min(query_finish_time, rec[0]) - max(query_start_time, rec[1])
+            query_period_energy = rec[2] * query_period_time / period_time
+            reward += query_period_energy
+        
+        return reward
     
-    reward = 0
-    for rec in data:
-        query_period_time = min(query_finish_time, rec[0]) - max(query_start_time, rec[1])
-        query_period_energy = rec[2] * query_period_time
-        reward += query_period_energy
+    elif mode == "psu":
+        data = read_power_logs_psu(query_start_time, query_finish_time)
     
-    return reward
+        reward = 0
+        for rec in data:
+            query_period_time = min(query_finish_time, rec[0]) - max(query_start_time, rec[1])
+            query_period_energy = rec[2] * query_period_time
+            reward += query_period_energy
+        
+        return reward
 
 class BaoModel:
     def __init__(self):
@@ -180,7 +223,7 @@ class BaoJSONHandler(JSONTCPHandler):
                 pid = obs_reward["pid"]
                 qtime = obs_reward["reward"]
                 qtime = int(float(qtime))
-                time.sleep(0.6)
+                time.sleep(WAITING_PERIOD)
                 energy_reward = get_energy_reward(message_time, qtime)
                 power_norm = norm_power(energy_reward / qtime)
                 qtime_norm = norm_time(qtime)
