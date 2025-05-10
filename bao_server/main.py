@@ -63,7 +63,7 @@ def read_power_logs_rapl(start_time, end_time):
 
                 if prev_time:
                     if time_reading >= start_time and prev_time < end_time:
-                        data.append((time_reading, prev_time, val - prev_eng))
+                        data.append((time_reading, prev_time, max(val - prev_eng, 0)))
                     
                 prev_time = time_reading
                 prev_eng = val
